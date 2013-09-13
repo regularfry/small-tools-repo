@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+Dir.chdir( "build")
+debdirs  = Dir['*/debian'].select{|d| File.directory?( d )}
+metadirs = Dir['*/DEBIAN'].select{|d| File.directory?( d )}
+
+kidpids = debdirs.map do |debdir|
+  fork do
+    Dir.chdir File.dirname( debdir )
+    exec "dpkg-buildpackage -us -uc"
+  end
+end
+
+kidpids += metadirs.map do |metadir|
+  fork do
+    exec "dpkg --build #{File.dirname( metadir )}"
+  end
+end
+
+successes = kidpids.map do |kidpid|
+  pid, status = Process.waitpid2( kidpid )
+  status.success?
+end
+
+exit successes.all?

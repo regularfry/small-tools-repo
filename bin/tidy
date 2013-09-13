@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+FileUtils.mkdir_p "repo"
+system "/bin/bash -c 'mv build/*.{deb,changes,dsc,tar.gz} repo'"
+Dir.chdir "repo" do
+  system "dpkg-scanpackages . /dev/null | gzip -9c > Packages.gz"
+end

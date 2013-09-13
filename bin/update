@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+
+Dir.chdir "build"
+gits = Dir['*/.git']
+repos = gits.map{|git| File.dirname( git )}
+kidpids = repos.map do |repodir|
+  fork do
+    Dir.chdir repodir
+    exec "git pull -u"
+  end
+end
+successes = kidpids.map do |pid|
+  pid, status = Process.waitpid2( pid )
+  status.success?
+end
+
+exit successes.all?
+
+

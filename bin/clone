@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+Thread.abort_on_exception = true
+
+require 'fileutils'
+
+repos = %w{
+  regularfry/ruby-install:debian
+  regularfry/chruby:debian
+  regularfry/gemsh
+  regularfry/in-chroot
+  regularfry/vmstrap
+  regularfry/cachestrap
+  regularfry/rv
+  regularfry/small-tools-ruby
+}
+
+FileUtils.mkdir_p "build"
+Dir.chdir "build" 
+threads = repos.each do |name|
+  repo, branch = name.split(":")
+  user, name = repo.split("/")
+  branch ||= "master"
+  if ! File.directory?( name )
+    Thread.new do
+      system "git clone -b #{branch} https://github.com/#{repo}.git"
+    end
+  end
+end
