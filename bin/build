@@ -1,8 +1,13 @@
 #!/usr/bin/env ruby
 
 Dir.chdir( "build")
-debdirs  = Dir['*/debian'].select{|d| File.directory?( d )}
-metadirs = Dir['*/DEBIAN'].select{|d| File.directory?( d )}
+debdirs  = Dir['*/debian'].select{|d| 
+  File.directory?( d ) && 
+    !File.directory?( File.join( d, "DEBIAN" ) )
+}
+metadirs = Dir['*/debian/DEBIAN'].
+  select{|d| File.directory?( d )}.
+  map{|d| File.dirname(d)}
 
 kidpids = debdirs.map do |debdir|
   fork do
@@ -13,7 +18,9 @@ end
 
 kidpids += metadirs.map do |metadir|
   fork do
-    exec "dpkg --build #{File.dirname( metadir )}"
+    dirname=File.dirname( metadir )
+    Dir.chdir dirname
+    exec "dpkg --build debian ../#{File.basename( dirname )}.deb"
   end
 end
 
